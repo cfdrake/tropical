@@ -6,6 +6,7 @@ local musicutil = require "musicutil"
 engine.name = "Thebangs"
 
 local notes = musicutil.generate_scale_of_length(48, "minor pentatonic", 24)
+local note_trigs = {0, 0, 0, 0, 0, 0, 0, 0}
 
 function new_fish()
   return {
@@ -23,16 +24,8 @@ function init()
   engine.algoIndex(4)
   engine.amp(1)
   engine.cutoff(5000)
-  
-  params:add_separator()
-  
-  params:add_taper("attack", "attack", 0, 2, 0, 0.1, "")
-  params:set_action("attack", function(x) engine.attack(x) end)
-  
-  params:add_taper("release", "release", 0, 2, 0.5, 0.1, "")
-  params:set_action("release", function(x) engine.release(x) end)
-
-  params:bang()
+  engine.attack(0.2)
+  engine.release(1)
   
   fishes = {new_fish(), new_fish(), new_fish(), new_fish()}
   
@@ -77,7 +70,14 @@ function update_fishes()
 end
 
 function play_note(i)
-  engine.hz(musicutil.note_num_to_freq(notes[i]))
+  if note_trigs[i] == 0 then
+    note_trigs[i] = 1
+    engine.hz(musicutil.note_num_to_freq(notes[i * 2]))
+    clock.run(function()
+      clock.sleep(1)
+      note_trigs[i] = 0
+    end)
+  end
 end
 
 function redraw()
@@ -117,4 +117,15 @@ function redraw()
   end
   
   screen.update()
+end
+
+function key(n, d)
+  if (n == 2 or n == 3) and d == 1 then
+    for i=1,#fishes do
+      fishes[i].x = math.random(0, 128)
+      fishes[i].y = math.random(0, 80)
+      speed_x = math.random()
+      speed_y = math.random()
+    end
+  end
 end
